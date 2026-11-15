@@ -1,0 +1,4 @@
+# Safety net for the whole repo (hub/.gitignore has the full list)
+.env
+.env.*
+!.env.example
