@@ -1,0 +1,43 @@
+# --- Secrets (never commit; a real key in Git history = -10 points) ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Hub runtime data ---
+*.db
+*.sqlite
+*.sqlite3
+logs/
+*.log
+archive/
+processed/
+rejected/
+
+# --- Generated output ---
+reports/
+exports/
+slips/
+
+# --- Rater evidence (personal data under RA 10173; submit via PDF, not Git) ---
+evidence/
+rater_photos/
+signed_sheets/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
