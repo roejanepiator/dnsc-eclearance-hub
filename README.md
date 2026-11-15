@@ -1,7 +1,7 @@
 # DNSC e-Clearance Hub
 
 One system that merges the Registrar, Library, Accounting and Student Affairs data into a single **CLEARED / HOLD** status per student.
-IT312 Final Project, Track A. FastAPI + SQLite. All data is synthetic.
+IT312 Final Project, Track A. FastAPI + SQLite. Team of 4. All data is synthetic.
 
 All code is in `hub/`. Run every command below from inside `hub/`.
 (`hub/README.md` is the instructor's original starter kit README.)
@@ -15,28 +15,35 @@ All code is in `hub/`. Run every command below from inside `hub/`.
 ## Setup (once per person)
 1. `git clone <repo url>` then `cd hub`
 2. `pip install -r requirements.txt`
-3. `python generate_keys.py`  (creates your own `.env`; never commit it)
-4. `git status`  (`.env` must NOT be listed)
+3. Copy the template: `copy .env.example .env` (Windows) or `cp .env.example .env` (Mac/Linux)
+4. Open `.env` and replace the 3 `ask-the-lead` values with the ones the Lead sent you **privately**
+5. `git status`  (`.env` must NOT be listed)
+
+Everyone uses the **same 3 keys**. Never paste them in Git, in a pinned message, or in a screenshot.
+`generate_keys.py` is for the Lead only. Do not run it (especially not `--force`): it would give you
+different keys from the team. If a key leaks, tell the Lead.
 
 ## Run
-- **Mock Registrar** (port 8001): `python run_mock_registrar.py`
+- **Mock Registrar** (port 8001): `python registrar_mock_api.py`  (reads the key from `.env`)
 - **Hub** (port 8000): `uvicorn app.main:app --reload --port 8000`, then open http://127.0.0.1:8000/docs
-- **Tests:** `pytest`
+- **Tests:** `python -m pytest`
+
+A browser visit to the mock shows `401`: that is normal, the key must be sent as an `X-API-Key` header.
 
 ## What is where (inside `hub/`)
 | Path | What | Owner |
 |---|---|---|
-| `app/` | The Hub code | see TASKS.md |
-| `app/routes/` | API endpoints | API dev |
-| `app/security/` | Login, roles, masking, signatures, audit log | Security |
-| `app/importers/` | Library XML + Accounting CSV adapters | Data |
+| `app/main.py`, `app/db.py`, `app/routes/` | Hub app, database, endpoints | API dev |
+| `app/registrar_client.py`, `app/holidays_client.py` | Calls to the Registrar and holidays APIs | API dev |
+| `app/security/` | Login, roles, masking, signatures, slips, audit log | Security |
+| `app/importers/`, `app/clearance.py`, `app/exports.py` | Importers, CLEARED/HOLD rules, report exports | Data |
 | `scripts/` | Automation script | Data |
-| `client/` | Student / staff / admin screens | Front-end/QA |
-| `tests/` | pytest tests | Front-end/QA (all add tests) |
+| `client/` | Student, staff and admin pages | Security (student) / API dev (staff, admin) |
+| `tests/` | pytest tests (everyone adds tests for their own code) | Lead (test plan) |
 | `db/schema.sql` | Database tables | API dev |
-| `docs/` | API contract, design, mapping spec | API dev / Lead / Data |
-| `generate_keys.py`, `run_mock_registrar.py` | Setup helpers | |
-| `registrar_mock_api.py`, `registrar_students.json`, `verify_manifest.py`, `drop_folder/`, `tamper_tests/` | Instructor starter kit (leave as is) | |
+| `docs/` | API contract (API dev), mapping spec (Data) | |
+| `generate_keys.py` | Makes the shared keys (Lead only) | Lead |
+| `registrar_mock_api.py`, `registrar_students.json`, `verify_manifest.py`, `drop_folder/`, `tamper_tests/` | Instructor starter kit (leave as is, except the key line in the mock) | |
 
 ## Keys in `.env`
 | Key | Used for |
