@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>My clearance · DNSC e-Clearance</title><link rel="stylesheet" href="css/styles.css"><script>try{document.documentElement.dataset.theme=localStorage.theme||"light"}catch(e){}</script></head><body>
+<div id="bar" class="bar"></div>
+<main id="app"></main><div id="toast" hidden role="status"></div>
+<script src="js/api.js"></script><script src="js/ui.js"></script>
+<script>
+(async()=>{const u=await guard(['student']);if(!u)return;const app=$('#app');app.replaceChildren(h('div',{class:'sk'}),h('div',{class:'sk'}),h('div',{class:'sk'}));
+try{const [c,d]=await Promise.all([api('GET','/clearance/'+u.student_id),api('GET','/deadline')]);const ok=c.overall==='CLEARED',n=c.offices.filter(o=>o.status!=='CLEARED').length;
+app.replaceChildren(h('div',{class:'card hero '+(ok?'ok':'hold')},h('p',{class:'muted'},'Hi, '+u.display_name),h('h1',{},ok?'You are cleared':n+(n>1?' offices':' office')+' to clear'),badge(c.overall),h('p',{class:'muted'},'Deadline: '+d.final_deadline)),
+...c.offices.map(o=>h('div',{class:'card'},h('div',{class:'row'},h('b',{},office(o.office)),badge(o.status)),o.reason?h('p',{},REASON[o.reason]||o.reason):'',h('p',{class:'muted'},'Updated '+fmt(o.updated_at)))),
+h('div',{class:'card',id:'slip'},h('button',{class:'btn',disabled:!ok,onclick:slip},'Get my clearance slip'),ok?'':h('p',{class:'muted'},'Available once every office is cleared.')))}catch(e){app.replaceChildren(h('div',{class:'card'},e.message))}
+async function slip(){try{const s=await api('POST','/clearance/'+u.student_id+'/slip');$('#slip').replaceChildren(h('h2',{},'Clearance slip'),s.qr_png_base64?h('img',{src:'data:image/png;base64,'+s.qr_png_base64,alt:'QR code of your clearance slip',style:'width:100%;max-width:280px'}):h('p',{class:'muted'},'The QR image appears when the API is connected.'),h('p',{class:'muted'},'Issued '+fmt(s.issued_at)+' · expires '+fmt(s.expires_at)),/^https?:/.test(s.verify_url)?h('a',{href:s.verify_url},'Open verify link'):'')}catch(e){toast(e.message)}}})();
+</script></body></html>
