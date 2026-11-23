@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verify slip · DNSC e-Clearance</title><link rel="stylesheet" href="css/styles.css"><script>try{document.documentElement.dataset.theme=localStorage.theme||"light"}catch(e){}</script></head><body>
+<div class="bar"><b>DNSC e-Clearance · Slip check</b><span data-themebtn></span></div>
+<main id="app"></main><div id="toast" hidden role="status"></div>
+<script src="js/api.js"></script><script src="js/ui.js"></script>
+<script>
+(async()=>{const id=new URLSearchParams(location.search).get('slip'),m=$('#app');
+try{const r=await api('GET','/slips/'+encodeURIComponent(id)+'/verify');m.replaceChildren(h('div',{class:'card hero '+(r.valid?'ok':'hold')},h('h1',{},r.valid?'✓ Valid clearance slip':'✕ Not valid'),r.valid?h('p',{},'Student '+r.student_id+' · '+r.overall):h('p',{},'Reason: '+(r.reason||'unknown')),r.valid?h('p',{class:'muted'},'Issued '+fmt(r.issued_at)+' · expires '+fmt(r.expires_at)):''))}
+catch(e){m.replaceChildren(h('div',{class:'card hero hold'},h('h1',{},'✕ Not found'),h('p',{},e.message)))}})();
+</script></body></html>

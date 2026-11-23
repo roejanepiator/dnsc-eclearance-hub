@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Staff desk · DNSC e-Clearance</title><link rel="stylesheet" href="css/styles.css"><script>try{document.documentElement.dataset.theme=localStorage.theme||"light"}catch(e){}</script></head><body>
+<div id="bar" class="bar"></div>
+<main id="app"></main><div id="toast" hidden role="status"></div>
+<script src="js/api.js"></script><script src="js/ui.js"></script>
+<script>
+(async()=>{const u=await guard(['staff','admin']);if(!u)return;let list=[];
+const stats=h('div',{class:'grid'}),q=h('input',{type:'search',placeholder:'Search name or program','aria-label':'Search'}),f=h('select',{'aria-label':'Filter'},...['','CLEARED','HOLD'].map(v=>h('option',{value:v},v||'All statuses'))),tb=h('tbody'),panel=h('div',{class:'card',hidden:true}),id=h('input',{placeholder:'Full student ID, e.g. 2023-59928','aria-label':'Student ID'});
+const draw=()=>{const t=q.value.toLowerCase();tb.replaceChildren(...list.filter(x=>(x.name+x.program_code).toLowerCase().includes(t)).map(x=>h('tr',{},h('td',{},x.name),h('td',{},x.student_id),h('td',{},x.program_code),h('td',{},badge(x.overall)))))};
+const load=async()=>{try{const [s,r]=await Promise.all([api('GET','/clearance/summary'),api('GET','/students?overall='+f.value)]);list=r.data;stats.replaceChildren(...[['Students',s.total_students],['Cleared',s.cleared],['On hold',s.hold]].map(([k,v])=>h('div',{class:'card'},h('div',{class:'muted'},k),h('b',{style:'font-size:28px'},v))));draw()}catch(e){toast(e.message)}};
+async function open(sid){try{const c=await api('GET','/clearance/'+encodeURIComponent(sid)),can=o=>u.role==='admin'||u.office===o;panel.hidden=false;
+panel.replaceChildren(h('div',{class:'row'},h('b',{},sid),badge(c.overall)),...c.offices.map(o=>h('div',{class:'row'},h('span',{},office(o.office)+' ',badge(o.status)),can(o.office)?h('span',{},h('button',{class:'btn alt',onclick:()=>act(sid,o.office,'CLEARED')},'Sign off'),' ',h('button',{class:'btn alt',onclick:()=>act(sid,o.office,'HOLD')},'Place hold')):'')))}catch(e){toast(e.message)}}
+async function act(sid,o,s){let reason=null;if(s==='HOLD'){reason=prompt('Reason for the hold?');if(!reason)return}
+try{await api('PUT','/clearance/'+encodeURIComponent(sid)+'/offices/'+o,{status:s,reason});toast('Saved');open(sid);load()}catch(e){toast(e.message)}}
+const aff=h('div',{class:'card'},h('h2',{},'Add Student Affairs record'),(()=>{const i=h('input',{placeholder:'Student ID','aria-label':'Student ID'}),t=h('select',{'aria-label':'Type'},h('option',{value:'EQUIPMENT'},'Borrowed equipment'),h('option',{value:'ORG_MEMBERSHIP'},'Org membership')),d=h('input',{placeholder:'Description','aria-label':'Description'});
+return h('div',{},h('div',{class:'row'},i,t),h('div',{class:'row'},d,h('button',{class:'btn',onclick:async()=>{try{await api('POST','/affairs/records',{student_id:i.value,record_type:t.value,description:d.value,outstanding:true});toast('Record added');i.value=d.value=''}catch(e){toast(e.message)}}},'Add')))})());
+q.oninput=draw;f.onchange=load;
+$('#app').replaceChildren(stats,h('div',{class:'card'},h('h2',{},'Open a student'),h('div',{class:'row'},id,h('button',{class:'btn',onclick:()=>id.value&&open(id.value.trim())},'Open')),h('p',{class:'muted'},'IDs in the list are masked. Type the full ID to open a record.')),panel,
+u.office==='STUDENT_AFFAIRS'||u.role==='admin'?aff:'',
+h('div',{class:'card'},h('div',{class:'row'},q,f),h('div',{class:'tw'},h('table',{},h('thead',{},h('tr',{},...['Name','ID','Program','Status'].map(x=>h('th',{},x)))),tb))));load()})();
+</script></body></html>

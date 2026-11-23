@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · DNSC e-Clearance</title>
+<link rel="stylesheet" href="css/styles.css"><script>try{document.documentElement.dataset.theme=localStorage.theme||"light"}catch(e){}</script>
+</head>
+<body class="login">
+<span class="tfloat" data-themebtn></span>
+<main class="glass" id="app">
+  <div class="brand"><div class="mark" aria-hidden="true">DNSC</div><div><b>e-Clearance Hub</b><span>Davao del Norte State College</span></div></div>
+  <h1>Welcome Back</h1>
+  <p class="sub">Sign in with your DNSC account</p>
+  <form id="f">
+    <label>Username<input id="u" autocomplete="username" required></label>
+    <label>Password<div class="pw"><input id="p" type="password" autocomplete="current-password" required><button type="button" id="show" aria-label="Show password">Show</button></div></label>
+    <button class="btn">Sign in</button>
+  </form>
+  <p id="err" role="alert"></p>
+  <p class="fine">Forgot your password? Please contact your office administrator.</p>
+  <p class="fine">Your data is handled under the Data Privacy Act (RA 10173).</p>
+  <p class="fine">Demo (mock mode): username student, staff or admin, any password.</p>
+</main>
+<div class="foot">DNSC e-Clearance Hub · IT312 Integrative Programming · 2026</div>
+<div id="toast" hidden role="status"></div>
+<script src="js/api.js"></script><script src="js/ui.js"></script>
+<script>
+$('#show').onclick=()=>{const p=$('#p'),s=p.type==='password';p.type=s?'text':'password';$('#show').textContent=s?'Hide':'Show'};
+$('#f').onsubmit=async ev=>{ev.preventDefault();$('#err').textContent='';try{const r=await api('POST','/auth/login',{username:$('#u').value,password:$('#p').value});S.token=r.access_token;location={student:'student.html',staff:'staff.html',admin:'admin.html'}[r.user.role]}catch(e){$('#err').textContent=e.status===429?'Too many attempts. Try again later.':e.message}};
+</script>
+</body>
+</html>
