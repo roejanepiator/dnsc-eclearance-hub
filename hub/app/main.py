@@ -1,30 +1,71 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .registrar_client import RegistrarClient, RegistrarError
+from .routes import students
+from .routes import students, clearance
+from .db import init_db
+init_db()
+
 
 app = FastAPI(title="DNSC e-Clearance Hub")
-registrar = RegistrarClient()
 
 
-@app.get("/health")
+# ─────────────────────────────────────────────
+# 🔒 Global Error Handlers
+# ─────────────────────────────────────────────
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": [{
+                "loc": [],
+                "msg": exc.detail,
+                "type": f"HTTP_{exc.status_code}"
+            }]
+        }
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc):
+    errors = []
+    for err in exc.errors():
+        errors.append({
+            "loc": list(err["loc"]),
+            "msg": err["msg"],
+            "type": err["type"]
+        })
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors}
+    )
+
+
+# ─────────────────────────────────────────────
+# 🔓 Public Routes
+# ─────────────────────────────────────────────
+
+@app.get("/health", tags=["System"])
 def health():
     return {"status": "ok"}
 
 
-@app.get("/students")
-def list_students():
-    try:
-        return registrar.get_all_students()
-    except RegistrarError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+# ─────────────────────────────────────────────
+# 📍 API v1 Routes — from routes/students.py
+# ─────────────────────────────────────────────
 
+app.include_router(
+    students.router,
+    prefix="/students",
+    tags=["Students"]
+)
 
-@app.get("/students/{student_id}")
-def one_student(student_id: str):
-    try:
-        student = registrar.get_student(student_id)
-    except RegistrarError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-    if student is None:
-        raise HTTPException(status_code=404, detail="student not in Registrar masterlist")
-    return student
+app.include_router(
+    clearance.router,
+    prefix="/clearance",
+    tags=["Clearance"]
+)
