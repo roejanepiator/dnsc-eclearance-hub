@@ -5,7 +5,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .routes import students
 from .routes import students, clearance
-from .fb import init_db
+from .db import init_db
 init_db()
 
 
