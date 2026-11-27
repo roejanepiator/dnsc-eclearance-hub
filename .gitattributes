@@ -1,0 +1,6 @@
+# Signed import files must never be line-ending converted.
+# The SHA-256 in each manifest covers the exact bytes (R14).
+hub/drop_folder/** -text
+hub/tamper_tests/** -text
+starter_kit/drop_folder/** -text
+starter_kit/tamper_tests/** -text
