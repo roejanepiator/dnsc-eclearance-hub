@@ -1,18 +1,19 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from .registrar_client import RegistrarClient, RegistrarError
-#from .routes import students   ← we'll create/use this next
+from .routes import students
+from .routes import students, clearance
+from .fb import init_db
+init_db()
 
 
 app = FastAPI(title="DNSC e-Clearance Hub")
-registrar = RegistrarClient()
 
 
 # ─────────────────────────────────────────────
-# 🔒 Global Error Handlers — Contract Standard Format
+# 🔒 Global Error Handlers
 # ─────────────────────────────────────────────
 
 @app.exception_handler(StarletteHTTPException)
@@ -45,33 +46,26 @@ async def validation_exception_handler(request: Request, exc):
 
 
 # ─────────────────────────────────────────────
-# 🔓 Public Routes — no /api/v1 prefix
+# 🔓 Public Routes
 # ─────────────────────────────────────────────
 
-@app.get("/health")
+@app.get("/health", tags=["System"])
 def health():
     return {"status": "ok"}
 
 
 # ─────────────────────────────────────────────
-# 📍 API v1 Routes — with prefix
+# 📍 API v1 Routes — from routes/students.py
 # ─────────────────────────────────────────────
 
-# Temporary: keep your working endpoints here first
-@app.get("/api/v1/students")
-def list_students():
-    try:
-        return registrar.get_all_students()
-    except RegistrarError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+app.include_router(
+    students.router,
+    prefix="/students",
+    tags=["Students"]
+)
 
-
-@app.get("/api/v1/students/{student_id}")
-def one_student(student_id: str):
-    try:
-        student = registrar.get_student(student_id)
-    except RegistrarError as e:
-        raise HTTPException(status_code=502, detail=str(e))
-    if student is None:
-        raise HTTPException(status_code=404, detail="student not in Registrar masterlist")
-    return student
+app.include_router(
+    clearance.router,
+    prefix="/clearance",
+    tags=["Clearance"]
+)
