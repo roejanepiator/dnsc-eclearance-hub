@@ -128,3 +128,55 @@ The export date comes from the signed manifest (`created_at`).
 +--------------------+-------------------------------------------------------------------------+
 | CSV line 43        | `BAD_AMOUNT` (also `BAD_DATE`; duplicate of 2024-45481, line 4 is kept) |
 +--------------------+-------------------------------------------------------------------------+  
+
+## 6. Whole-file rejects (`import_files.reject_reason`)
+
+A file is rejected whole, nothing is read, and one `REJECTED` row is logged.
+
++-------------------------+--------------------------------------------------------------------------+
+| Code                    | When                                                                     |
++-------------------------+--------------------------------------------------------------------------+
+| `BAD_MANIFEST`          | manifest missing, not JSON, fields missing, wrong source or bad          |
+|                         | `created_at`                                                             |
++-------------------------+--------------------------------------------------------------------------+
+| `SIGNATURE_INVALID`     | HMAC signature does not match (wrong key or edited manifest)             |
++-------------------------+--------------------------------------------------------------------------+
+| `HASH_MISMATCH`         | file bytes differ from the signed SHA-256 (tampered file)                |
++-------------------------+--------------------------------------------------------------------------+
+| `REPLAY`                | the manifest nonce was already accepted                                  |
++-------------------------+--------------------------------------------------------------------------+
+| `UNREADABLE_FILE`       | broken XML or not UTF-8 or missing CSV column                            |
++-------------------------+--------------------------------------------------------------------------+
+| `RECORD_COUNT_MISMATCH` | rows found differ from the signed `record_count`                         |
++-------------------------+--------------------------------------------------------------------------+
+
+Order of checks: signature, hash, source, replay, parse, record count.
+
+## 7. How accepted rows are saved and turned into clearance
+
++------------+---------------------+-----------------------+----------------------------+
+| Source     | Saved to            | One record per        | Newer import               |
++------------+---------------------+-----------------------+----------------------------+
+| Library    | `library_records`   | student               | replaces the student's row |
++------------+---------------------+-----------------------+----------------------------+
+| Accounting | `accounting_records`| student and term      | replaces that row          |
++------------+---------------------+-----------------------+----------------------------+
+
++----------------------+----------------------------------------+-------------------------+
+| Office               | HOLD when                              | Reason                  |
++----------------------+----------------------------------------+-------------------------+
+| any (LOA student)    | student status is `LOA`                | `ON_LOA`                |
++----------------------+----------------------------------------+-------------------------+
+| LIBRARY              | unreturned books > 0, else fines > 0,  | `UNRETURNED_BOOKS`,     |
+|                      | else CLEARED (no row = CLEARED)        | `UNPAID_FINES`          |
++----------------------+----------------------------------------+-------------------------+
+| ACCOUNTING           | no row for the current term,           | `NO_ACCOUNTING_RECORD`, |
+|                      | or balance > 0                         | `BALANCE_DUE`           |
++----------------------+----------------------------------------+-------------------------+
+| STUDENT_AFFAIRS      | any outstanding `affairs_records` row  | `AFFAIRS_OUTSTANDING`   |
++----------------------+----------------------------------------+-------------------------+
+| LIBRARY / ACCOUNTING | student's rows disagreed in the        | `NEEDS_REVIEW`          |
+|                      | newest import                          |                         |
++----------------------+----------------------------------------+-------------------------+
+
+A MANUAL staff decision stays until an import changes that student's data for that office.

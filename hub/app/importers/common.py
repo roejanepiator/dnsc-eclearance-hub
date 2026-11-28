@@ -5,7 +5,7 @@ They only turn raw text into clean values (or a reject code), so they are easy t
 """
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 # Allow-lists (R11): a value is accepted only if it matches one of these exact shapes.
@@ -132,3 +132,9 @@ def resolve_duplicates(valid_rows, key_of, compare_of):
             for record, row_ref, raw in items:
                 rejects.append(make_reject(row_ref, ["DATA_CONFLICT"], record["student_id"], raw))
     return kept, rejects
+
+
+def now_iso():
+    """Current time as ISO-8601 text with the Philippine offset, e.g. 2026-11-28T14:05:09+08:00."""
+    manila = timezone(timedelta(hours=8))
+    return datetime.now(manila).isoformat(timespec="seconds")
